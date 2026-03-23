@@ -1,0 +1,12 @@
+[package]
+name = "pdfredact"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.4.0", features = ["derive"] }
+redactor = "0.3.0"
+anyhow = "1.0"
+regex = "1.9"
+walkdir = "2.4"
+fs_extra = "1.3"
