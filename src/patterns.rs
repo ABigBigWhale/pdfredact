@@ -1,5 +1,3 @@
-use regex::Regex;
-
 pub struct PiiPattern {
     pub name: &'static str,
     pub regex: &'static str,
@@ -39,6 +37,7 @@ pub fn escape_literal(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use regex::Regex;
 
     #[test]
     fn test_email_regex() {
