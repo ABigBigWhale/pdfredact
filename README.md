@@ -1,6 +1,6 @@
 # PDF Redact
 
-A Rust-based CLI tool that removes matching PDF page text and marks the redacted areas.
+A Rust-based CLI tool that removes matching text from PDF pages.
 
 ## Features
 - Redact common PII using built-in regex:
@@ -55,7 +55,7 @@ Redact all PII from a single PDF:
 
 ### Using Custom Regex
 ```bash
-./target/release/pdfredact sample.pdf --regex r"\b[A-Z]{3}-\d{5}\b"
+./target/release/pdfredact sample.pdf --regex '\b[A-Z]{3}-\d{5}\b'
 ```
 
 ### Options
@@ -80,8 +80,7 @@ The tool uses the `redactor` crate which leverages MuPDF's redaction API. It:
 1.  Parses the PDF content.
 2.  Identifies text matching the target patterns.
 3.  Determines the exact coordinates of the text.
-4.  **Physically removes** the text objects from the PDF structure.
-5.  Draws a black rectangle over the redacted area.
-6.  Discards unreferenced PDF objects, including replaced page streams, before publishing the result.
+4.  Removes matching text from the page content.
+5.  Discards unreferenced PDF objects, including replaced page streams, before publishing the result.
 
-Redaction is limited to matching page text. Scanned images, form field values, metadata, annotations, and embedded attachments can still contain sensitive information. Files with no matches are copied as-is.
+Redaction is limited to matching page text. The default SSN pattern requires hyphens. Use custom targets for names and other identifier formats. Scanned images, form field values, metadata, annotations, and embedded attachments can still contain sensitive information. Files with no matches are copied as-is.
