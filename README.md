@@ -1,6 +1,6 @@
 # PDF Redact
 
-A Rust-based CLI tool to securely redact sensitive personal information (PII) from PDF files. It physically removes the text and overlays black boxes, ensuring the data cannot be recovered by copy-pasting or searching.
+A Rust-based CLI tool that removes matching PDF page text and marks the redacted areas.
 
 ## Features
 - Redact common PII using built-in regex:
@@ -82,3 +82,6 @@ The tool uses the `redactor` crate which leverages MuPDF's redaction API. It:
 3.  Determines the exact coordinates of the text.
 4.  **Physically removes** the text objects from the PDF structure.
 5.  Draws a black rectangle over the redacted area.
+6.  Discards unreferenced PDF objects, including replaced page streams, before publishing the result.
+
+Redaction is limited to matching page text. Scanned images, form field values, metadata, annotations, and embedded attachments can still contain sensitive information. Files with no matches are copied as-is.

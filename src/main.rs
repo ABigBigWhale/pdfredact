@@ -1,5 +1,6 @@
 use anyhow::{Context, Result};
 use clap::Parser;
+use mupdf::pdf::{PdfDocument, PdfWriteOptions};
 use redactor::{RedactionService, RedactionTarget};
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
@@ -112,9 +113,29 @@ fn process_file(
         println!("Processing: {:?}", filename);
     }
 
-    service
-        .redact(input, &output_path, targets)
+    let staging = tempfile::tempdir_in(output_dir).context("Failed to stage redaction output")?;
+    let intermediate = staging.path().join("redacted.pdf");
+    let result = service
+        .redact(input, &intermediate, targets)
         .with_context(|| format!("Failed to redact file: {:?}", input))?;
 
+    let completed = if result.has_redactions() {
+        // MuPDF replaces page streams when applying redactions. Its default save
+        // can retain the original streams as unreferenced objects.
+        let document = PdfDocument::open(intermediate.to_str().context("Invalid staging path")?)
+            .context("Failed to reopen staged redaction")?;
+        let cleaned = staging.path().join("cleaned.pdf");
+        let mut options = PdfWriteOptions::default();
+        options.set_garbage(true);
+        document
+            .save_with_options(cleaned.to_str().context("Invalid staging path")?, options)
+            .context("Failed to discard unreferenced PDF objects")?;
+        cleaned
+    } else {
+        intermediate
+    };
+
+    std::fs::rename(completed, &output_path)
+        .with_context(|| format!("Failed to save output: {:?}", output_path))?;
     Ok(())
 }
