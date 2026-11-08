@@ -10,7 +10,7 @@ pub const DEFAULT_PATTERNS: &[PiiPattern] = &[
     },
     PiiPattern {
         name: "SSN",
-        regex: r"\b\d{3}-\d{2}-\d{4}\b",
+        regex: r"\b(?:\d{3}(?:[-–]|[ \t]+)\d{2}(?:[-–]|[ \t]+)\d{4}|\d{9}|(?:\d[ \t]+){8}\d)\b",
     },
     PiiPattern {
         name: "Phone",
@@ -51,8 +51,23 @@ mod tests {
     fn test_ssn_regex() {
         let pattern = DEFAULT_PATTERNS.iter().find(|p| p.name == "SSN").unwrap();
         let re = Regex::new(pattern.regex).unwrap();
-        assert!(re.is_match("123-45-6789"));
-        assert!(!re.is_match("123-456-789"));
+        for ssn in [
+            "000-12-3456",
+            "000123456",
+            "000 12  3456",
+            "000–12–3456",
+            "0 0 0 1 2 3 4 5 6",
+        ] {
+            assert_eq!(re.find(ssn).map(|hit| hit.as_str()), Some(ssn));
+        }
+        for other in [
+            "000-123-456",
+            "0001234567",
+            "X000123456",
+            "0 0 0 1 2\n3 4 5 6",
+        ] {
+            assert!(!re.is_match(other), "unexpected SSN match in {other:?}");
+        }
     }
 
     #[test]

@@ -5,7 +5,7 @@ A Rust-based CLI tool that removes matching text from PDF pages.
 ## Features
 - Redact common PII using built-in regex:
   - Emails
-  - Social Security Numbers (SSN)
+  - Social Security Numbers (SSN) with hyphens, en dashes, spaces, or no separators, including separately spaced digits on one line
   - Phone Numbers
   - Basic home addresses
   - Age mentions
@@ -83,4 +83,4 @@ The tool uses the `redactor` crate which leverages MuPDF's redaction API. It:
 4.  Removes matching text from the page content.
 5.  Discards unreferenced PDF objects, including replaced page streams, before publishing the result.
 
-Redaction is limited to matching page text. The default SSN pattern requires hyphens. Use custom targets for names and other identifier formats. Scanned images, form field values, metadata, annotations, and embedded attachments can still contain sensitive information. Files with no matches are copied as-is.
+Redaction is limited to matching page text. The default SSN pattern can also match other nine-digit identifiers. Use custom targets for names and other identifier formats. Scanned images, form field values, metadata, annotations, and embedded attachments can still contain sensitive information. Files with no matches are copied as-is.

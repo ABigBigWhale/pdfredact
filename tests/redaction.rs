@@ -3,7 +3,6 @@ use lopdf::{dictionary, Document, Object, Stream};
 use std::path::Path;
 use std::process::Command;
 
-const SECRET: &str = "000-12-3456";
 const LABEL: &str = "Public label";
 
 fn write_pdf(path: &Path, value: &str) {
@@ -43,16 +42,27 @@ fn write_pdf(path: &Path, value: &str) {
 }
 
 #[test]
-fn redaction_discards_original_page_stream() {
+fn redaction_discards_original_page_stream_for_ssn_formats() {
+    for ssn in [
+        "000-12-3456",
+        "000123456",
+        "000 12 3456",
+        "0 0 0 1 2 3 4 5 6",
+    ] {
+        assert_ssn_removed(ssn);
+    }
+}
+
+fn assert_ssn_removed(ssn: &str) {
     let temp = tempfile::tempdir().unwrap();
     let input = temp.path().join("sample.pdf");
     let output = temp.path().join("output");
-    write_pdf(&input, SECRET);
+    write_pdf(&input, ssn);
     assert!(Document::load(&input)
         .unwrap()
         .extract_text(&[1])
         .unwrap()
-        .contains(SECRET));
+        .contains(ssn));
 
     let status = Command::new(env!("CARGO_BIN_EXE_pdfredact"))
         .arg(&input)
@@ -65,7 +75,7 @@ fn redaction_discards_original_page_stream() {
     let result = Document::load(output.join("sample.pdf")).unwrap();
     let text = result.extract_text(&[1]).unwrap();
     assert!(text.contains(LABEL));
-    assert!(!text.contains(SECRET));
+    assert!(!text.contains(ssn), "SSN remains in extracted text: {ssn}");
     for object in result.objects.values() {
         if let Object::Stream(stream) = object {
             let data = if stream.dict.has(b"Filter") {
@@ -73,9 +83,10 @@ fn redaction_discards_original_page_stream() {
             } else {
                 stream.content.clone()
             };
-            assert!(!data
-                .windows(SECRET.len())
-                .any(|bytes| bytes == SECRET.as_bytes()));
+            assert!(
+                !data.windows(ssn.len()).any(|bytes| bytes == ssn.as_bytes()),
+                "SSN remains in a saved PDF stream: {ssn}"
+            );
         }
     }
 }
